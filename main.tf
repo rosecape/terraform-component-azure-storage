@@ -197,10 +197,10 @@ resource "azurerm_key_vault_secret" "datalake" {
 
   name = "datalake-connection"
   value = jsonencode({
-    "id"                       = azurerm_storage_account.datalake.id
-    "access_key"               = azurerm_storage_account.datalake.primary_access_key
-    "connection_string"        = azurerm_storage_account.datalake.primary_connection_string
-    "AZURE_STORAGE_ACCESS_KEY" = azurerm_storage_account.datalake.primary_access_key
+    "id"                       = azurerm_storage_account.datalake[0].id
+    "access_key"               = azurerm_storage_account.datalake[0].primary_access_key
+    "connection_string"        = azurerm_storage_account.datalake[0].primary_connection_string
+    "AZURE_STORAGE_ACCESS_KEY" = azurerm_storage_account.datalake[0].primary_access_key
   })
   key_vault_id = data.azurerm_key_vault.core[0].id
 }
