@@ -15,10 +15,34 @@ variable "administrator_password" {
   default     = null
 }
 
+variable "create_iceberg_rest_api_db" {
+  type        = bool
+  description = "Create the Iceberg REST API"
+  default     = false
+}
+
+variable "create_airflow_db" {
+  type        = bool
+  description = "Create the Airflow database"
+  default     = false
+}
+
+variable "create_superset_db" {
+  type        = bool
+  description = "Create the Superset database"
+  default     = false
+}
+
+variable "create_datalake_storage_account" {
+  type        = bool
+  description = "Create the datalake storage account"
+  default     = false
+}
+
 variable "postgres_sku_name" {
   type        = string
   description = "The SKU name for the PostgreSQL server"
-  default     = "B_Standard_B1ms"
+  default     = "B_Standard_B2s"
 }
 
 variable "postgres_storage_mb" {

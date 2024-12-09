@@ -110,6 +110,8 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "iceberg_rest_api" {
+  count = var.create_iceberg_rest_api_db ? 1 : 0
+
   name      = "iceberg-rest-api"
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
@@ -122,6 +124,8 @@ resource "azurerm_postgresql_flexible_server_database" "iceberg_rest_api" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "airflow" {
+  count = var.create_airflow_db ? 1 : 0
+
   name      = "airflow"
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
@@ -133,6 +137,8 @@ resource "azurerm_postgresql_flexible_server_database" "airflow" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "superset" {
+  count = var.create_superset_db ? 1 : 0
+
   name      = "superset"
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
@@ -144,6 +150,8 @@ resource "azurerm_postgresql_flexible_server_database" "superset" {
 }
 
 resource "azurerm_storage_account" "datalake" {
+  count = var.create_datalake_storage_account ? 1 : 0
+
   name                = "${var.storage_name}datalake"
   resource_group_name = var.resource_group_name
 
@@ -155,8 +163,10 @@ resource "azurerm_storage_account" "datalake" {
 }
 
 resource "azurerm_storage_container" "warehouse" {
+  count = var.create_datalake_storage_account ? 1 : 0
+
   name                  = "warehouse"
-  storage_account_name  = azurerm_storage_account.datalake.name
+  storage_account_name  = azurerm_storage_account.datalake[0].name
   container_access_type = "private"
 }
 
