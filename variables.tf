@@ -53,9 +53,21 @@ variable "storage_name" {
   description = "The name of the database component"
 }
 
-variable "storage_private_dns_zone" {
+# variable "storage_private_dns_zone" {
+#   type        = string
+#   description = "The private DNS zone for the storage account"
+# }
+
+variable "key_vault_name" {
   type        = string
-  description = "The private DNS zone for the storage account"
+  description = "The name of the key vault"
+  default     = null
+}
+
+variable "virtual_network_id" {
+  description = "The ID of the virtual network"
+  type        = string
+  default     = null
 }
 
 variable "virtual_network_name" {

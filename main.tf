@@ -9,7 +9,15 @@ data "azurerm_virtual_network" "main" {
   server is created. 
 */
 resource "random_password" "pass" {
-  length = 32
+  length  = 32
+  special = false
+}
+
+data "azurerm_key_vault" "core" {
+  count = var.key_vault_name != null ? 1 : 0
+
+  name                = var.key_vault_name
+  resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_network_security_group" "psql_flexible_servers" {
@@ -133,4 +141,66 @@ resource "azurerm_postgresql_flexible_server_database" "superset" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "azurerm_storage_account" "datalake" {
+  name                = "${var.storage_name}datalake"
+  resource_group_name = var.resource_group_name
+
+  location                 = var.resource_group_location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  is_hns_enabled = true
+}
+
+resource "azurerm_storage_container" "warehouse" {
+  name                  = "warehouse"
+  storage_account_name  = azurerm_storage_account.datalake.name
+  container_access_type = "private"
+}
+
+
+/* Temporary solution to store random generated password
+    in a key vault secret. Rotation will be ensured by downstream
+    automation. */
+resource "azurerm_key_vault_secret" "metadata" {
+  count = var.key_vault_name != null ? 1 : 0
+
+  name = "metadata-connection"
+  value = jsonencode({
+    "id"                  = azurerm_postgresql_flexible_server.main.id
+    "username"            = var.administrator_login
+    "password"            = random_password.pass.result
+    "server"              = azurerm_postgresql_flexible_server.main.fqdn
+    "database"            = azurerm_postgresql_flexible_server_database.main.name
+    "resource_group_name" = var.resource_group_name
+    "METADATA_HOST"       = azurerm_postgresql_flexible_server.main.fqdn
+    "METADATA_USER"       = var.administrator_login
+    "METADATA_PASSWORD"   = random_password.pass.result
+  })
+  key_vault_id = data.azurerm_key_vault.core[0].id
+}
+
+resource "azurerm_key_vault_secret" "datalake" {
+  count = var.key_vault_name != null ? 1 : 0
+
+  name = "datalake-connection"
+  value = jsonencode({
+    "id"                       = azurerm_storage_account.datalake.id
+    "access_key"               = azurerm_storage_account.datalake.primary_access_key
+    "connection_string"        = azurerm_storage_account.datalake.primary_connection_string
+    "AZURE_STORAGE_ACCESS_KEY" = azurerm_storage_account.datalake.primary_access_key
+  })
+  key_vault_id = data.azurerm_key_vault.core[0].id
+}
+
+resource "azurerm_key_vault_secret" "iceberg_rest_api" {
+  count = var.key_vault_name != null ? 1 : 0
+
+  name = "iceberg-jdbc-metadata-connection"
+  value = jsonencode({
+    "uri" : "jdbc:postgresql://${azurerm_postgresql_flexible_server.main.fqdn}:5432/iceberg-rest-api?user=${var.administrator_login}&password=${random_password.pass.result}",
+  })
+  key_vault_id = data.azurerm_key_vault.core[0].id
 }
